@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V-IQ doc review tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F6F8; --surface:#FFFFFF; --ink:#15202B; --muted:#5A6570; --line:#DCE1E6; --line-soft:#E9EDF1;
+  --accent:#1E5A86; --accent-ink:#FFFFFF; --focus:#2F6FDB;
+  --s-not:#8C96A1; --s-prog:#2F6FDB; --s-wait:#C2850E; --s-done:#2D8655; --s-wont:#9A5B8E;
+  --p-high:#B4372B; --p-med:#A06A0A; --p-low:#5A6570;
+  --tint:#EEF3F8;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F141A; --surface:#161D25; --ink:#E5EAF0; --muted:#98A4B0; --line:#2A3440; --line-soft:#212A35;
+    --accent:#6FA6D6; --accent-ink:#0F141A; --focus:#7FB0FF;
+    --s-not:#7D8894; --s-prog:#6E9EF0; --s-wait:#E0A93A; --s-done:#53B57E; --s-wont:#C08BB6;
+    --p-high:#EC7A6E; --p-med:#E0A93A; --p-low:#98A4B0; --tint:#1B2530;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F141A; --surface:#161D25; --ink:#E5EAF0; --muted:#98A4B0; --line:#2A3440; --line-soft:#212A35;
+  --accent:#6FA6D6; --accent-ink:#0F141A; --focus:#7FB0FF;
+  --s-not:#7D8894; --s-prog:#6E9EF0; --s-wait:#E0A93A; --s-done:#53B57E; --s-wont:#C08BB6;
+  --p-high:#EC7A6E; --p-med:#E0A93A; --p-low:#98A4B0; --tint:#1B2530;
+  color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+h1{font-family:"Newsreader",Georgia,"Times New Roman",serif;font-weight:600;font-size:clamp(28px,4.5vw,40px);line-height:1.1;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 22px;max-width:62ch}
+.sub a{color:var(--accent)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 13px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* progress strip: the one memorable element */
+.strip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin-bottom:22px}
+.strip-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.big{font-family:"Newsreader",Georgia,serif;font-size:34px;font-weight:600;line-height:1}
+.big small{font-family:"Instrument Sans",system-ui,sans-serif;font-size:14px;font-weight:500;color:var(--muted);margin-left:6px}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line-soft)}
+.bar span{display:block;height:100%;transition:width .35s ease}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:13px;color:var(--muted)}
+.legend button{background:none;border:0;padding:2px 0;cursor:pointer;color:inherit;display:inline-flex;align-items:center;gap:6px}
+.legend button[aria-pressed="true"]{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:500;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.tools input[type=search]{flex:1 1 200px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px}
+.tools select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 8px}
+
+/* ledger */
+.ledger{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{border-top:1px solid var(--line-soft)}
+.row:first-child{border-top:0}
+.row-head{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
+.row-head:hover{background:var(--tint)}
+.num{font-family:"Newsreader",Georgia,serif;font-size:20px;color:var(--muted);text-align:right}
+.title{font-weight:600;line-height:1.35}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted);margin-top:3px}
+.prio{font-weight:600}
+.prio.High{color:var(--p-high)} .prio.Medium{color:var(--p-med)} .prio.Low{color:var(--p-low)}
+.status-sel{border:1px solid var(--line);border-radius:999px;padding:4px 26px 4px 10px;background:var(--surface);font-size:13px;font-weight:600;appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 13px) 55%,calc(100% - 9px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+.row.done .title{color:var(--muted)}
+.detail{padding:0 14px 18px 70px;display:none}
+.row.open .detail{display:block}
+.detail h3{font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 0 4px}
+.detail p{margin:0 0 6px;max-width:72ch}
+.detail ul{margin:0;padding-left:18px;max-width:72ch}
+.detail li{margin:3px 0}
+.edit-line{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;font-size:13px}
+.edit-line select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px}
+.timeline{list-style:none;padding:0;margin:4px 0 0;border-left:2px solid var(--line);padding-left:14px}
+.timeline li{position:relative;margin:0 0 8px;font-size:13.5px}
+.timeline li::before{content:"";position:absolute;left:-19px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.timeline time{color:var(--muted);font-size:12px;margin-right:6px}
+.note-form{display:flex;gap:8px;margin-top:8px}
+.note-form input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px}
+.empty{padding:28px 18px;color:var(--muted);text-align:center}
+
+/* activity */
+.day{margin:0 0 18px}
+.day h2{font-family:"Newsreader",Georgia,serif;font-size:19px;font-weight:600;margin:0 0 8px}
+.act{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 14px}
+.act-item{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:14px}
+.act-item:first-child{border-top:0}
+.act-item time{color:var(--muted);font-size:12.5px;padding-top:1px}
+.act-item b{font-weight:600}
+.linkish{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-weight:600;text-align:left}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,15,20,.45)}
+.dlg{padding:20px}
+.dlg h2{font-family:"Newsreader",Georgia,serif;font-size:24px;margin:0 0 14px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;color:var(--ink);font-size:14.5px}
+.field textarea{min-height:84px;resize:vertical}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.hint{font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.banner{border:1px solid var(--line);background:var(--tint);border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:14px;display:none}
+@media (max-width:640px){
+  .row-head{grid-template-columns:30px 1fr;}
+  .row-head .status-sel{grid-column:2;justify-self:start}
+  .num{font-size:17px}
+  .detail{padding-left:14px}
+  .grid3{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.bar span{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>V-IQ doc review</h1>
+  <p class="sub">Issues found while reviewing <em>V-IQ – How to Use the Platform</em>. Set a status on each one, add notes as you go, and see every change in Activity. Changes are saved in this browser; use Export to back them up or move them to another device.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <section class="strip" aria-label="Progress">
+    <div class="strip-top">
+      <div class="big"><span id="doneCount">–</span><small id="ofCount">loading issues</small></div>
+      <div class="actions"><button class="btn" id="exportBtn" type="button">Export</button><button class="btn" id="importBtn" type="button">Import</button><input type="file" id="importFile" accept="application/json,.json" hidden><button class="btn primary" id="addBtn" type="button">Log an issue</button></div>
+    </div>
+    <div class="bar" id="bar" role="img" aria-label="Issues by status"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabIssues" aria-selected="true" type="button">Issues</button>
+    <button class="tab" role="tab" id="tabActivity" aria-selected="false" type="button">Activity</button>
+  </div>
+
+  <div id="viewIssues">
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search issues" aria-label="Search issues">
+      <select id="fCat" aria-label="Filter by type"><option value="">All types</option></select>
+      <select id="fPrio" aria-label="Filter by priority"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select>
+      <select id="sort" aria-label="Sort">
+        <option value="num">Sort by number</option>
+        <option value="prio">Sort by priority</option>
+        <option value="updated">Recently changed</option>
+      </select>
+    </div>
+    <div class="ledger" id="list"><div class="empty">Loading issues…</div></div>
+  </div>
+
+  <div id="viewActivity" hidden></div>
+</div>
+
+<dialog id="dlg">
+  <form class="dlg" id="addForm" method="dialog">
+    <h2>Log an issue</h2>
+    <label class="field">Title<input name="title" required maxlength="160" placeholder="e.g. Gate B wording assumes the user is the investor"></label>
+    <div class="grid3">
+      <label class="field">Type<select name="category" id="newCat"></select></label>
+      <label class="field">Priority<select name="priority"><option>Medium</option><option>High</option><option>Low</option></select></label>
+      <label class="field">Section<input name="section" maxlength="80" placeholder="e.g. 5.8"></label>
+    </div>
+    <label class="field">What's wrong<textarea name="summary" maxlength="4000" placeholder="Describe the issue"></textarea></label>
+    <label class="field">Suggested fix<textarea name="fix" maxlength="4000" placeholder="One point per line"></textarea><span class="hint">Each line becomes a separate point.</span></label>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="cancelAdd">Cancel</button>
+      <button class="btn primary" type="submit" id="saveAdd">Log issue</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  const STATUSES = [
+    {key:"Not started", color:"var(--s-not)"},
+    {key:"In progress", color:"var(--s-prog)"},
+    {key:"Waiting", color:"var(--s-wait)"},
+    {key:"Completed", color:"var(--s-done)"},
+    {key:"Won't do", color:"var(--s-wont)"}
+  ];
+  const CATS = ["Reword","Unclear or contradictory","Product change","New feature","Proofread","Other"];
+  const PRIO_RANK = {High:0, Medium:1, Low:2};
+  const statusColor = k => (STATUSES.find(s=>s.key===k)||STATUSES[0]).color;
+
+  const STORE_KEY = "viq-review-tracker:v1";
+  const SEED = [{"id": "issue-01", "num": 1, "title": "Rename roles to standard VC titles", "category": "Reword", "priority": "Medium", "section": "2 and throughout", "status": "Not started", "summary": "\"Scout\" usually means an external, part-time deal sourcer in VC, not an internal first-pass reviewer. The current role names don't match how the industry uses them.", "details": ["Scout → Analyst", "Analyst → Associate", "Investment Team → keep, or switch to Partner or Principal (open decision)", "Rename everywhere: Section 1 (\"scout-enablement workspace\"), stand-in rules, 4.1 heading, 5.4 (\"scout intake\", \"scout brief\"), 5.8 report list, route table (\"Scout and above\"), glossary (Gate A)", "Change every existing \"Analyst\" to \"Associate\" first, then \"Scout\" to \"Analyst\", so the names don't collide", "This is a product change too: UI labels, permissions and report names (e.g. \"scout brief\") must match the doc"], "createdAt": "2026-10-14T14:00:00.000Z", "updatedAt": "2026-10-14T17:28:36.286Z", "history": [{"type": "logged", "at": "2026-10-14T14:00:00.000Z", "text": "Logged"}, {"type": "status", "at": "2026-10-14T17:28:34.711Z", "from": "Not started", "to": "Waiting"}, {"type": "status", "at": "2026-10-14T17:28:36.286Z", "from": "Waiting", "to": "Not started"}]}, {"id": "issue-02", "num": 2, "title": "Merge founder story and interview into one founder information step", "category": "Product change", "priority": "Medium", "section": "5.7b, 5.9", "status": "Not started", "summary": "Story Studio (founder background, how the company started) and the founder interview overlap. The same information can be collected twice through two different tools, and the doc never explains how they relate.", "details": ["Option A: record the interview (Zoom/Meet) and ingest the transcript into the system", "Option B: send the founder a secure, temporary link to type answers to the story and company questions", "Allow either or both; track which via the existing \"source mode\" field on each story block", "Transcript-based story blocks must use exact quotes and still need founder approval for external use", "Capture recording consent (some states, including Illinois, require all parties to agree)", "Consider consolidating founder-facing links (intake, story, follow-up) into one founder workspace", "Requires a product/code change, not just a doc edit"], "createdAt": "2026-10-14T14:05:00.000Z", "updatedAt": "2026-10-14T14:05:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:05:00.000Z", "text": "Logged"}]}, {"id": "issue-03", "num": 3, "title": "Define the external story expert", "category": "Unclear or contradictory", "priority": "Low", "section": "2, 5.7b", "status": "Not started", "summary": "The doc only says what external story experts can't access, never who they are or what they're for. It's also not a standard VC/PE term; readers may confuse it with expert networks (GLG, AlphaSights).", "details": ["Say who they are and why a firm would use one", "Who chooses them, and whether the founder is told", "Confidentiality / NDA terms", "Whether their input counts as evidence, analyst judgment, or editorial input only"], "createdAt": "2026-10-14T14:06:00.000Z", "updatedAt": "2026-10-14T14:06:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:06:00.000Z", "text": "Logged"}]}, {"id": "issue-04", "num": 4, "title": "Two ways to start an assessment: scout-submitted or founder-submitted intake", "category": "Product change", "priority": "High", "section": "5 opening, 5.1, 2, 6", "status": "Not started", "summary": "All three V-IQ guides say only founders can start an assessment (\"no internal create assessment action\"). Usid says scouts can also submit the intake form. The docs and the product description conflict.", "details": ["Option A, scout submits: the firm already has the deck, memo and company details, so a scout fills in the intake form and uploads the documents", "Option B, founder submits: the firm sends the intake link to the founder's email and the founder fills it in (current written process)", "Confirm with Usid whether the software supports Option A today; if not, build it", "Reword Section 5: \"An assessment begins with an intake submission, completed either by the founder or by a scout on the founder's behalf.\"", "Add Option A to 5.1 intake paths and \"submit intake\" to Scout permissions in Section 2", "Also update Your Guide to the Platform (3.2) and the Platform Walkthrough deck (Workflow slide)", "Design: record who entered each answer; decide how Delta treats scout-entered vs founder-written claims; decide whether the founder confirms scout-entered answers"], "createdAt": "2026-10-14T14:20:00.000Z", "updatedAt": "2026-10-14T14:20:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:20:00.000Z", "text": "Logged"}]}, {"id": "issue-05", "num": 5, "title": "Reword the \"narrative explanation\" line in 5.7", "category": "Reword", "priority": "Low", "section": "5.7", "status": "Not started", "summary": "The warning that the model's explanation isn't evidence is buried at the end of a list. \"Narrative\" clashes with its Story Studio meaning, and the sentence never says what reviewers should rely on. Wording only.", "details": ["Suggested: \"Each proposal carries the target field, the proposed value, the current canonical value, exact supporting citations, and the expected score impact. It also includes the model's written explanation of the change. That explanation is context only: approve or reject based on the cited sources, not on the explanation.\"", "The Platform Walkthrough deck already phrases this more clearly (\"Its explanation is context, not evidence\")"], "createdAt": "2026-10-14T14:25:00.000Z", "updatedAt": "2026-10-14T14:25:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:25:00.000Z", "text": "Logged"}]}, {"id": "issue-06", "num": 6, "title": "Investor memo for sharing a company with outside investors", "category": "New feature", "priority": "High", "section": "5.8, 5.10, new", "status": "Not started", "summary": "V-IQ must work for VC funds that invest and for VC advisory firms that match founders with VCs, angels and private investors. There is no report for sending a company to outside investors: the Founder Report goes back to the company and the seven decision-grade reports are internal only.", "details": ["Build a memo an advisory firm (or a lead fund bringing in co-investors) sends to potential investors so they can do their own diligence", "Open decision: send the report with the score, without the score, or a completely different investor report", "Selling point: every claim traces to a cited source the investor can check", "Later questions: founder consent before sharing; expiring, revocable, watermarked links; always exclude internal thesis, IC discussion and dissent", "Related: workflow and wording assume the user is the investor (Gate B, IC, \"investment decision\"); advisory firms likely need an advisory version, e.g. \"present to investors\""], "createdAt": "2026-10-14T14:40:00.000Z", "updatedAt": "2026-10-14T14:40:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:40:00.000Z", "text": "Logged and flagged high priority"}]}, {"id": "issue-07", "num": 7, "title": "Proofread and simplify the One Pager and the How to Use the Platform doc", "category": "Proofread", "priority": "Medium", "section": "Whole documents", "status": "Not started", "summary": "Fix typos, make sure the wording makes sense, and simplify anything overly complicated in both files.", "details": ["Files: V-IQ Investor Diligence One Pager; V-IQ - How to Use the Platform", "Three One Pager versions exist (two .pptx dated Sept 11 and Sept 15, one PDF from Sept 11). Confirm which is final, archive the others, and re-export the PDF", "Candidate: simplify the glossary \"Story block\" definition, since \"source mode\" is never defined"], "createdAt": "2026-10-14T14:45:00.000Z", "updatedAt": "2026-10-14T14:45:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:45:00.000Z", "text": "Logged"}]}, {"id": "issue-08", "num": 8, "title": "Classify companies by sub-sector, not just sector", "category": "New feature", "priority": "Medium", "section": "3.2, 5.1", "status": "Not started", "summary": "Companies should be tagged by sub-sector as well as sector (e.g. Healthcare → AI diagnostics → radiology imaging). The doc currently doesn't mention sector classification at all.", "details": ["Intake: capture sector and sub-sector at submission", "Firm thesis and exclusions: firms often target or exclude specific sub-sectors", "Queue: sort and filter deal flow by sub-sector", "Comparisons and benchmarks: compare against true sub-sector peers", "Investor memo (#6): advisory firms match companies to investors by sub-sector focus", "Fix: add a sector → sub-sector taxonomy and explain it in 3.2 and 5.1"], "createdAt": "2026-10-14T14:55:00.000Z", "updatedAt": "2026-10-14T14:55:00.000Z", "history": [{"type": "logged", "at": "2026-10-14T14:55:00.000Z", "text": "Logged"}]}];
+  let storageOk = true, canWrite = true, issues = [], open = new Set(), statusFilter = "";
+  const $ = id => document.getElementById(id);
+  const el = (tag, props, ...kids) => {
+    const n = document.createElement(tag);
+    if (props) for (const [k,v] of Object.entries(props)) {
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (v !== undefined && v !== null && v !== false) n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  };
+  const toast = msg => { const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); };
+  const fmtTime = iso => { const d=new Date(iso); return isNaN(d)?"":d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); };
+  const fmtDay = iso => { const d=new Date(iso); if (isNaN(d)) return "Unknown date";
+    const today=new Date(); const y=new Date(); y.setDate(today.getDate()-1);
+    if (d.toDateString()===today.toDateString()) return "Today";
+    if (d.toDateString()===y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"}); };
+  const fmtShort = iso => { const d=new Date(iso); return isNaN(d)?"":d.toLocaleDateString([], {month:"short", day:"numeric"}) + ", " + fmtTime(iso); };
+  const str = v => typeof v === "string" ? v : "";
+  const arr = v => Array.isArray(v) ? v.filter(x=>typeof x==="string") : [];
+
+  // filters setup
+  for (const c of CATS) { $("fCat").append(el("option",{value:c,text:c})); $("newCat").append(el("option",{value:c,text:c})); }
+  ["q","fCat","fPrio","sort"].forEach(id => $(id).addEventListener("input", renderList));
+
+  // tabs
+  function showTab(which){
+    const issuesOn = which==="issues";
+    $("tabIssues").setAttribute("aria-selected", issuesOn);
+    $("tabActivity").setAttribute("aria-selected", !issuesOn);
+    $("viewIssues").hidden = !issuesOn; $("viewActivity").hidden = issuesOn;
+    if (!issuesOn) renderActivity();
+  }
+  $("tabIssues").onclick = () => showTab("issues");
+  $("tabActivity").onclick = () => showTab("activity");
+
+  function renderStrip(){
+    const total = issues.length;
+    const counts = Object.fromEntries(STATUSES.map(s=>[s.key,0]));
+    for (const i of issues) counts[i.status in counts ? i.status : "Not started"]++;
+    $("doneCount").textContent = counts["Completed"];
+    $("ofCount").textContent = total ? `of ${total} completed` : "no issues yet";
+    const bar = $("bar"); bar.replaceChildren();
+    for (const s of STATUSES) if (counts[s.key]) bar.append(el("span",{style:`width:${counts[s.key]/total*100}%;background:${s.color}`,title:`${s.key}: ${counts[s.key]}`}));
+    bar.setAttribute("aria-label", STATUSES.map(s=>`${s.key} ${counts[s.key]}`).join(", "));
+    const lg = $("legend"); lg.replaceChildren();
+    for (const s of STATUSES) {
+      const b = el("button",{type:"button","aria-pressed":statusFilter===s.key?"true":"false",onclick:()=>{statusFilter = statusFilter===s.key?"":s.key; renderStrip(); renderList();}},
+        el("span",{class:"dot",style:`background:${s.color}`}), `${s.key} ${counts[s.key]}`);
+      lg.append(b);
+    }
+  }
+
+  function filtered(){
+    const q = $("q").value.trim().toLowerCase(), c=$("fCat").value, p=$("fPrio").value, sort=$("sort").value;
+    let list = issues.filter(i => (!statusFilter || i.status===statusFilter) && (!c || i.category===c) && (!p || i.priority===p) &&
+      (!q || [i.title,i.summary,i.section,i.category,...i.details].join(" ").toLowerCase().includes(q)));
+    if (sort==="prio") list.sort((a,b)=>(PRIO_RANK[a.priority]??3)-(PRIO_RANK[b.priority]??3) || a.num-b.num);
+    else if (sort==="updated") list.sort((a,b)=>str(b.updatedAt).localeCompare(str(a.updatedAt)));
+    else list.sort((a,b)=>a.num-b.num);
+    return list;
+  }
+
+  function renderList(){
+    const listEl = $("list"); listEl.replaceChildren();
+    if (!issues.length) { listEl.append(el("div",{class:"empty",text:"No issues logged yet. Use “Log an issue” to add the first one."})); return; }
+    const list = filtered();
+    if (!list.length) { listEl.append(el("div",{class:"empty",text:"No issues match these filters."})); return; }
+    for (const i of list) listEl.append(renderRow(i));
+  }
+
+  function statusSelect(i){
+    const s = el("select",{class:"status-sel","aria-label":`Status of issue ${i.num}`, style:`color:${statusColor(i.status)}`});
+    for (const st of STATUSES) s.append(el("option",{value:st.key,text:st.key}));
+    s.value = i.status; s.disabled = !canWrite;
+    s.addEventListener("click", e=>e.stopPropagation());
+    s.addEventListener("change", async e => { e.stopPropagation(); await changeStatus(i, s.value); });
+    return s;
+  }
+
+  function renderRow(i){
+    const row = el("div",{class:"row"+(open.has(i.id)?" open":"")+(i.status==="Completed"||i.status==="Won't do"?" done":"")});
+    const head = el("div",{class:"row-head",role:"button",tabindex:"0","aria-expanded":open.has(i.id)?"true":"false"},
+      el("div",{class:"num",text:"#"+i.num}),
+      el("div",null, el("div",{class:"title",text:i.title}),
+        el("div",{class:"meta"},
+          el("span",{class:"prio "+i.priority,text:i.priority+" priority"}),
+          el("span",{text:i.category}),
+          i.section ? el("span",{text:"Section "+i.section}) : null,
+          el("span",{text:"Changed "+fmtShort(i.updatedAt)}))),
+      statusSelect(i));
+    const toggle = () => { open.has(i.id)?open.delete(i.id):open.add(i.id); renderList(); };
+    head.addEventListener("click", toggle);
+    head.addEventListener("keydown", e => { if (e.target===head && (e.key==="Enter"||e.key===" ")) { e.preventDefault(); toggle(); } });
+    row.append(head);
+
+    const d = el("div",{class:"detail"});
+    if (i.summary) d.append(el("h3",{text:"What's wrong"}), el("p",{text:i.summary}));
+    if (i.details.length) { const ul=el("ul"); i.details.forEach(t=>ul.append(el("li",{text:t}))); d.append(el("h3",{text:"Suggested fix and notes"}), ul); }
+
+    const prioSel = el("select",{"aria-label":"Priority"}); ["High","Medium","Low"].forEach(p=>prioSel.append(el("option",{text:p}))); prioSel.value=i.priority; prioSel.disabled=!canWrite;
+    prioSel.onchange = () => changeField(i, "priority", prioSel.value);
+    const catSel = el("select",{"aria-label":"Type"}); CATS.forEach(c=>catSel.append(el("option",{text:c}))); catSel.value=CATS.includes(i.category)?i.category:"Other"; catSel.disabled=!canWrite;
+    catSel.onchange = () => changeField(i, "category", catSel.value);
+    d.append(el("div",{class:"edit-line"}, "Priority", prioSel, "Type", catSel));
+
+    d.append(el("h3",{text:"History"}));
+    const tl = el("ul",{class:"timeline"});
+    [...i.history].reverse().forEach(h => tl.append(el("li",null, el("time",{datetime:h.at,text:fmtShort(h.at)}), describe(h))));
+    d.append(tl);
+
+    if (canWrite) {
+      const inp = el("input",{type:"text",maxlength:"1000",placeholder:"Add a note to this issue","aria-label":"Note"});
+      const btn = el("button",{class:"btn",type:"submit",text:"Add note"});
+      const f = el("form",{class:"note-form"}, inp, btn);
+      f.addEventListener("submit", async e => { e.preventDefault(); const t=inp.value.trim(); if(!t) return; btn.disabled=true; const ok = await addHistory(i, {type:"note", text:t}); btn.disabled=false; if(ok){ inp.value=""; } });
+      d.append(f);
+    }
+    row.append(d);
+    return row;
+  }
+
+  function describe(h){
+    if (h.type==="status") return `Status: ${h.from||"–"} → ${h.to}`;
+    if (h.type==="logged") return h.text || "Logged";
+    if (h.type==="field") return `${h.field}: ${h.from||"–"} → ${h.to}`;
+    if (h.type==="note") return "Note: " + (h.text||"");
+    return h.text || "";
+  }
+
+  function renderActivity(){
+    const v = $("viewActivity"); v.replaceChildren();
+    const events = [];
+    for (const i of issues) for (const h of i.history) events.push({i,h});
+    events.sort((a,b)=>str(b.h.at).localeCompare(str(a.h.at)));
+    if (!events.length) { v.append(el("div",{class:"ledger"},el("div",{class:"empty",text:"Nothing has happened yet."}))); return; }
+    let curDay=null, box=null;
+    for (const {i,h} of events) {
+      const day = fmtDay(h.at);
+      if (day!==curDay) { curDay=day; box=el("div",{class:"act"}); v.append(el("section",{class:"day"}, el("h2",{text:day}), box)); }
+      const link = el("button",{class:"linkish",type:"button",text:`#${i.num} ${i.title}`,onclick:()=>{ open.add(i.id); statusFilter=""; $("q").value=""; $("fCat").value=""; $("fPrio").value=""; showTab("issues"); renderStrip(); renderList(); }});
+      box.append(el("div",{class:"act-item"}, el("time",{datetime:h.at,text:fmtTime(h.at)}), el("div",null, link, el("div",{text:describe(h)}))));
+    }
+  }
+
+  function renderAll(){ renderStrip(); renderList(); if (!$("viewActivity").hidden) renderActivity(); }
+
+  function normalize(snap){
+    const d = snap.data() || {};
+    const hist = Array.isArray(d.history) ? d.history.filter(h=>h && typeof h==="object").map(h=>({type:str(h.type),at:str(h.at),from:str(h.from),to:str(h.to),field:str(h.field),text:str(h.text)})) : [];
+    return { id: snap.id, num: Number(d.num)||0, title: str(d.title)||"(untitled)", category: str(d.category)||"Other",
+      priority: ["High","Medium","Low"].includes(d.priority)?d.priority:"Medium", section: str(d.section), summary: str(d.summary),
+      details: arr(d.details), status: STATUSES.some(s=>s.key===d.status)?d.status:"Not started",
+      createdAt: str(d.createdAt), updatedAt: str(d.updatedAt)||str(d.createdAt), history: hist };
+  }
+
+  function readStore(){
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) { const v = JSON.parse(raw); if (Array.isArray(v)) return v; } }
+    catch(_) { storageOk = false; }
+    return JSON.parse(JSON.stringify(SEED));
+  }
+  function persist(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(issues)); return true; }
+    catch(_) { storageOk = false; showBanner("This browser isn't saving changes (storage is blocked or full). Use Export to keep a copy."); return false; }
+  }
+  function load(list){
+    issues = list.filter(d=>d && typeof d==="object").map(d=>normalize({id: str(d.id) || ("issue-"+Math.random().toString(36).slice(2,9)), data:()=>d}));
+    renderAll();
+  }
+  async function save(i, patch){
+    const idx = issues.findIndex(x=>x.id===i.id); if (idx<0) return false;
+    issues[idx] = {...issues[idx], ...patch};
+    persist(); renderAll(); return true;
+  }
+  async function changeStatus(i, to){
+    if (to===i.status) return;
+    const now = new Date().toISOString();
+    const ok = await save(i, {status:to, updatedAt:now, history:[...i.history, {type:"status", at:now, from:i.status, to}]});
+    if (ok) toast(`#${i.num} set to ${to}`); else renderList();
+  }
+  async function changeField(i, field, to){
+    const now = new Date().toISOString();
+    const label = field==="priority"?"Priority":"Type";
+    const ok = await save(i, {[field]:to, updatedAt:now, history:[...i.history, {type:"field", field:label, at:now, from:i[field], to}]});
+    if (!ok) renderList();
+  }
+  async function addHistory(i, h){
+    const now = new Date().toISOString();
+    return save(i, {updatedAt:now, history:[...i.history, {...h, at:now}]});
+  }
+
+  function showBanner(t){ const b=$("banner"); b.textContent=t; b.style.display="block"; }
+
+  // add dialog
+  $("addBtn").onclick = () => { if(!canWrite){ toast("You don't have permission to add issues."); return; } $("addForm").reset(); $("dlg").showModal(); };
+  $("cancelAdd").onclick = () => $("dlg").close();
+  $("addForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const title = str(f.get("title")).trim(); if (!title) return;
+    const now = new Date().toISOString();
+    const num = issues.reduce((m,i)=>Math.max(m,i.num),0)+1;
+    const id = "issue-" + String(num).padStart(2,"0") + "-" + Math.random().toString(36).slice(2,7);
+    const body = { num, title, category: str(f.get("category"))||"Other", priority: str(f.get("priority"))||"Medium",
+      section: str(f.get("section")).trim(), summary: str(f.get("summary")).trim(),
+      details: str(f.get("fix")).split("\n").map(s=>s.replace(/^[-•*]\s*/,"").trim()).filter(Boolean),
+      status:"Not started", createdAt:now, updatedAt:now, history:[{type:"logged", at:now, text:"Logged"}] };
+    $("saveAdd").disabled = true;
+    issues.push({id, ...body}); persist(); renderAll();
+    $("dlg").close(); toast(`Logged #${num}`); $("saveAdd").disabled = false;
+  });
+
+  // export / import
+  $("exportBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify({exportedAt:new Date().toISOString(), issues}, null, 2)], {type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "viq-review-issues-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    toast("Exported " + issues.length + " issues");
+  };
+  $("importBtn").onclick = () => $("importFile").click();
+  $("importFile").onchange = async e => {
+    const file = e.target.files && e.target.files[0]; e.target.value = ""; if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const list = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.issues) ? parsed.issues : null;
+      if (!list) { toast("That file doesn't contain any issues."); return; }
+      if (!confirm("Replace the " + issues.length + " issues here with the " + list.length + " issues in this file?")) return;
+      load(list); persist(); toast("Imported " + issues.length + " issues");
+    } catch(_) { toast("Couldn't read that file. Choose a JSON file exported from this tracker."); }
+  };
+
+  // boot
+  load(readStore());
+  if (!storageOk) showBanner("This browser isn't saving changes (storage is blocked). Use Export to keep a copy.");
+})();
+</script>
+</body>
+</html>
